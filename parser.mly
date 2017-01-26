@@ -14,36 +14,54 @@
 %%
 
 formspec
-  : ds = list(external_definition); EOF
-    { ds }
+  : external_definitions EOF
+    { List.rev $1 }
+  ;
+external_definitions
+  : external_definitions external_definition
+    { $2 :: $1 }
+  | external_definition
+    { [$1] }
   ;
 external_definition
-  : v = VARIABLE; ASSIGN; exp = expression;
-    { Ast.Variable_definition (v, exp) }
-  | e = IDENTIFIER; ASSIGN; LBRACE; fs = list(field); RBRACE
-    { Ast.Element_definition (e, fs) }
+  : VARIABLE ASSIGN expression;
+    { Ast.Variable_definition ($1, $3) }
+  | IDENTIFIER ASSIGN LBRACE fields RBRACE
+    { Ast.Element_definition ($1, $4) }
+  ;
+fields
+  : fields field
+    { $2 :: $1 }
+  | field
+    { [$1] }
   ;
 field
-  : k = IDENTIFIER; ASSIGN; v = expression
-    { (k, v) }
+  : IDENTIFIER ASSIGN expression
+    { ($1, $3) }
   ;
 expression
-  : v = VARIABLE
-    { Ast.Variable_expression v }
-  | n = NUMBER
-    { Ast.Number_expression n }
-  | id = IDENTIFIER
-    { Ast.Identifier_expression id }
-  | lhs = expression; PLUS; rhs = expression
-    { Ast.Binary_operation_expression (lhs, Ast.Plus, rhs) }
-  | lhs = expression; MINUS; rhs = expression
-    { Ast.Binary_operation_expression (lhs, Ast.Minus, rhs) }
-  | lhs = expression; MULT; rhs = expression
-    { Ast.Binary_operation_expression (lhs, Ast.Mult, rhs) }
-  | lhs = expression; DIV; rhs = expression
-    { Ast.Binary_operation_expression (lhs, Ast.Div, rhs) }
-  | LPAREN; e = expression; RPAREN
-    { Ast.Paren_expression e }
-  | LBRACKET; elems = separated_list(COMMA, expression); RBRACKET
-    { Ast.Array_expression elems }
+  : VARIABLE
+    { Ast.Variable_expression $1 }
+  | NUMBER
+    { Ast.Number_expression $1 }
+  | IDENTIFIER
+    { Ast.Identifier_expression $1 }
+  | expression PLUS expression
+    { Ast.Binary_operation_expression ($1, Ast.Plus, $3) }
+  | expression MINUS expression
+    { Ast.Binary_operation_expression ($1, Ast.Minus, $3) }
+  | expression MULT expression
+    { Ast.Binary_operation_expression ($1, Ast.Mult, $3) }
+  | expression DIV expression
+    { Ast.Binary_operation_expression ($1, Ast.Div, $3) }
+  | LPAREN expression RPAREN
+    { Ast.Paren_expression $2 }
+  | LBRACKET expressions RBRACKET
+    { Ast.Array_expression (List.rev $2) }
+  ;
+expressions
+  : expressions COMMA expression
+    { $3 :: $1 }
+  | expression
+    { [$1] }
   ;

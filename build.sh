@@ -2,7 +2,7 @@ rm *.cmi *.cmo parser.ml lexer.ml
 
 ocamlc -c ast.ml
 ocamllex lexer.mll
-menhir parser.mly --infer
+ocamlyacc parser.mly
 ocamlc -c parser.mli
 ocamlc -c lexer.ml
 ocamlc -c parser.ml
